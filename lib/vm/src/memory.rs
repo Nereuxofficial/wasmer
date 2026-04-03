@@ -44,7 +44,8 @@ impl WasmMmap {
         unsafe {
             let md_ptr = self.get_vm_memory_definition();
             let md = md_ptr.as_ref();
-            Bytes::from(md.current_length).try_into().unwrap()
+            // 25% of time spent here, 14% of which is in try_into
+            Bytes::from(md.current_length).into()
         }
     }
 
@@ -401,8 +402,9 @@ impl LinearMemory for VMOwnedMemory {
         self.config.ty(minimum)
     }
 
-    /// Returns the size of hte memory in pages
+    /// Returns the size of the memory in pages
     fn size(&self) -> Pages {
+        // Slow
         self.mmap.size()
     }
 
@@ -640,6 +642,7 @@ impl From<VMSharedMemory> for VMMemory {
 }
 
 /// Represents linear memory that can be either owned or shared
+// Pointer indirection that costs time
 #[derive(Debug)]
 pub struct VMMemory(pub Box<dyn LinearMemory + 'static>);
 

@@ -120,14 +120,13 @@ where
 #[error("Number of pages exceeds uint32 range")]
 pub struct PageCountOutOfRange;
 
-impl TryFrom<Bytes> for Pages {
-    type Error = PageCountOutOfRange;
-
-    fn try_from(bytes: Bytes) -> Result<Self, Self::Error> {
-        let pages: u32 = (bytes.0 / WASM_PAGE_SIZE)
-            .try_into()
-            .or(Err(PageCountOutOfRange))?;
-        Ok(Self(pages))
+impl From<Bytes> for Pages {
+    fn from(bytes: Bytes) -> Self {
+        //let can_exceed_u32 = const { usize::MAX / WASM_PAGE_SIZE < u32::MAX as usize };
+        // If this cannot overflow, we can safely convert to u32 as unchecked
+        let pages = bytes.0 / WASM_PAGE_SIZE;
+        let pages = unsafe { pages.try_into().unwrap_unchecked() };
+        Self(pages)
     }
 }
 
